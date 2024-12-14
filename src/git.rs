@@ -276,7 +276,15 @@ impl Repository {
             let depth = depth.iter().flatten();
             let branch = branch.iter().flatten();
 
-            cmd!(GIT, "clone", "--recursive", @depth, @branch, &url, &self.worktree).run()?;
+            // Jobs massivly speed up cloning all the submodules.
+            // The --jobs flag was introduced with git 2.9 in 2016, so we assume most people have it.
+            // https://github.blog/2016-06-13-git-2-9-has-been-released/
+            // git itself has a bug so jobs=0 doesnt work to get the number of cores (fixed only in >2.39)
+            // because of that we provide our own estimite via rust std
+            let cores = std::thread::available_parallelism()?;
+            let jobs = format!("--jobs={}", cores);
+
+            cmd!(GIT, "clone", jobs,"--recursive", @depth, @branch, &url, &self.worktree).run()?;
 
             if let Some(Ref::Commit(s)) = options.force_ref {
                 cmd!(GIT, @self.git_args(), "checkout", s).run()?;
@@ -419,6 +427,7 @@ pub struct CloneOptions {
     /// - `git reset HEAD <reset mode>` (where `reset mode` is the value of
     ///   [`branch_update_action`](Self::branch_update_action))
     /// - `git pull --ff-only`
+    ///
     /// If these operations fail an error is returned from [`Repository::clone_ext`].
     pub force_ref: Option<Ref>,
     /// The mode that is passed to `git reset` when the branch is updated.
@@ -451,6 +460,7 @@ impl CloneOptions {
     /// - `git reset HEAD <reset mode>` (where `reset mode` is the value of
     ///   [`branch_update_action`](Self::branch_update_action))
     /// - `git pull --ff-only`
+    ///
     /// If these operations fail an error is returned from [`Repository::clone_ext`].
     pub fn force_ref(mut self, force_ref: Ref) -> Self {
         self.force_ref = Some(force_ref);

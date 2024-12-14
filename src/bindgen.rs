@@ -40,7 +40,7 @@ impl Factory {
         Ok(Self {
             clang_args,
             linker: Some(scons_vars.full_path(scons_vars.link.clone())?),
-            mcu: Some(scons_vars.mcu.clone()),
+            mcu: scons_vars.mcu.clone(),
             force_cpp: false,
             sysroot: None,
         })
@@ -136,7 +136,7 @@ impl Factory {
         let builder = bindgen::Builder::default()
             .use_core()
             .layout_tests(false)
-            .rustfmt_bindings(false)
+            .formatter(bindgen::Formatter::None)
             .derive_default(true)
             .clang_arg("-D__bindgen")
             // Include directories provided by the build system

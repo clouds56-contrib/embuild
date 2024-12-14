@@ -1,3 +1,5 @@
+#![allow(deprecated)] // TODO: For now
+
 /// An iterator that parses a command as windows command-line arguments and returns them
 /// as [`String`]s.
 ///
@@ -38,7 +40,7 @@ impl<'a> WindowsCommandArgs<'a> {
     }
 }
 
-impl<'a> Iterator for WindowsCommandArgs<'a> {
+impl Iterator for WindowsCommandArgs<'_> {
     type Item = String;
 
     /// Parse the command as separate arguments.

@@ -78,11 +78,7 @@ impl Crate {
 
         cargo_toml.lib = Some(Product {
             crate_type: lib_type,
-            ..if let Some(p) = cargo_toml.lib.take() {
-                p
-            } else {
-                Default::default()
-            }
+            ..cargo_toml.lib.take().unwrap_or_default()
         });
 
         self.save_manifest(&cargo_toml)?;
@@ -110,7 +106,11 @@ impl Crate {
         }
     }
 
-    /// Create a `config.toml` in `.cargo` with a `[target]` and `[unstable]` section.
+    /// Create a `config.toml` in `.cargo` with an `[unstable]` section, and a `[build] target`
+    /// if a `target` is given.
+    ///
+    /// `[build] target` changes the default `cargo --target`, so it should only be used when the
+    /// default target is unwanted.
     pub fn create_config_toml(
         &self,
         target: Option<impl AsRef<str>>,
